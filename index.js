@@ -1,23 +1,19 @@
-const express = require('express');
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.send('Ryphera Guard 7/24 Aktif! 🛡️');
-});
-
-app.listen(port, () => {
-  console.log(`Port ${port} üzerinden dinleniyor. Render mutlu, bot mutlu!`);
-});
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
 require('dotenv').config();
 
+// --- RENDER İÇİN WEB SUNUCUSU ---
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-// GUARD BOT INTENT'LERİ (Ban/Kick/Mute işlemleri için GuildModeration şart)
+app.get('/', (req, res) => res.send('🛡️ RYPHERA GUARD ONLINE VE NÖBETTE!'));
+app.listen(PORT, () => {
+    console.log(`🌐 [WEB] Port ${PORT} üzerinde dinleniyor. Render mutlu!`);
+});
+
+// --- DISCORD BOT AYARLARI ---
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -33,7 +29,7 @@ const commandsArray = [];
 
 // --- KOMUT YÜKLEYİCİ ---
 const commandsPath = path.join(__dirname, 'commands');
-if (!fs.existsSync(commandsPath)) fs.mkdirSync(commandsPath); // Klasör yoksa kendi açar
+if (!fs.existsSync(commandsPath)) fs.mkdirSync(commandsPath);
 const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
 
 for (const file of commandFiles) {
@@ -46,7 +42,7 @@ for (const file of commandFiles) {
 
 // --- EVENT YÜKLEYİCİ ---
 const eventsPath = path.join(__dirname, 'events');
-if (!fs.existsSync(eventsPath)) fs.mkdirSync(eventsPath); // Klasör yoksa kendi açar
+if (!fs.existsSync(eventsPath)) fs.mkdirSync(eventsPath);
 const eventFiles = fs.readdirSync(eventsPath).filter(f => f.endsWith('.js'));
 
 for (const file of eventFiles) {
@@ -61,7 +57,6 @@ for (const file of eventFiles) {
 // --- SLASH KOMUT TETİKLEYİCİ ---
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
-
     const command = client.commands.get(interaction.commandName);
     if (!command) return;
 
@@ -70,28 +65,21 @@ client.on('interactionCreate', async interaction => {
     } catch (error) {
         console.error(error);
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: '❌ Komut çalıştırılırken bir hata oluştu!', ephemeral: true });
+            await interaction.followUp({ content: '❌ Hata oluştu!', ephemeral: true });
         } else {
-            await interaction.reply({ content: '❌ Komut çalıştırılırken bir hata oluştu!', ephemeral: true });
+            await interaction.reply({ content: '❌ Hata oluştu!', ephemeral: true });
         }
     }
 });
 
-// --- RENDER PORT KANDIRMACASI ---
-app.get('/', (req, res) => res.send('🛡️ RYPHERA GUARD ONLINE VE NÖBETTE!'));
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-    console.log(`🌐 [WEB] Port ${PORT} üzerinde dinleniyor.`);
-});
-
-// BOTA CAN VER
+// --- BOTU BAŞLAT ---
 client.once('ready', async () => {
     console.log(`🛡️ [GUARD BOT] Göreve Hazır: ${client.user.tag}`);
     try {
         await client.application.commands.set(commandsArray);
-        console.log('✅ Moderasyon Komutları Discord\'a Yüklendi!');
+        console.log('✅ Komutlar Discord\'a yüklendi!');
     } catch (error) { 
-        console.error('❌ Komut kayıt hatası:', error); 
+        console.error('❌ Kayıt hatası:', error); 
     }
 });
 
